@@ -180,13 +180,13 @@
 /**
  * @transportstruct
  * @typedef NetworkContext_t
- * @brief The NetworkContext is an incomplete type. An implementation of this
- * interface must define struct NetworkContext for the system requirements.
- * This context is passed into the network interface functions.
+ * @brief This context is passed into the network interface functions.
  */
 /* @[define_networkcontext] */
-struct NetworkContext;
-typedef struct NetworkContext NetworkContext_t;
+typedef struct {
+    uint32_t receiveTimeoutMs;
+    uint32_t sendTimeoutMs;
+} NetworkContext_t;
 /* @[define_networkcontext] */
 
 /**
@@ -255,6 +255,49 @@ typedef struct TransportInterface
     NetworkContext_t * pNetworkContext; /**< Implementation-defined network context. */
 } TransportInterface_t;
 /* @[define_transportinterface] */
+
+/** TLS support */
+/**
+ * @brief Contains the credentials necessary for tls connection setup.
+ */
+typedef struct NetworkCredentials
+{
+    /**
+     * @brief To use ALPN, set this to a NULL-terminated list of supported
+     * protocols in decreasing order of preference.
+     *
+     * See [this link]
+     * (https://aws.amazon.com/blogs/iot/mqtt-with-tls-client-authentication-on-port-443-why-it-is-useful-and-how-it-works/)
+     * for more information.
+     */
+    const char ** pAlpnProtos;
+
+    /**
+     * @brief Disable server name indication (SNI) for a TLS session.
+     */
+    bool disableSni;
+
+    const uint8_t * pRootCa;     /**< @brief String representing a trusted server root certificate. */
+    size_t rootCaSize;           /**< @brief Size associated with #NetworkCredentials.pRootCa. */
+    const uint8_t * pClientCert; /**< @brief String representing the client certificate. */
+    size_t clientCertSize;       /**< @brief Size associated with #NetworkCredentials.pClientCert. */
+    const uint8_t * pPrivateKey; /**< @brief String representing the client certificate's private key. */
+    size_t privateKeySize;       /**< @brief Size associated with #NetworkCredentials.pPrivateKey. */
+} NetworkCredentials_t;
+
+/**
+ * @brief TLS Connect / Disconnect return status.
+ */
+typedef enum TlsTransportStatus
+{
+    TLS_TRANSPORT_SUCCESS = 0,         /**< Function successfully completed. */
+    TLS_TRANSPORT_INVALID_PARAMETER,   /**< At least one parameter was invalid. */
+    TLS_TRANSPORT_INSUFFICIENT_MEMORY, /**< Insufficient memory required to establish connection. */
+    TLS_TRANSPORT_INVALID_CREDENTIALS, /**< Provided credentials were invalid. */
+    TLS_TRANSPORT_HANDSHAKE_FAILED,    /**< Performing TLS handshake with server failed. */
+    TLS_TRANSPORT_INTERNAL_ERROR,      /**< A call to a system API resulted in an internal error. */
+    TLS_TRANSPORT_CONNECT_FAILURE      /**< Initial connection to the server failed. */
+} TlsTransportStatus_t;
 
 /* *INDENT-OFF* */
 #ifdef __cplusplus
